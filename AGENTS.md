@@ -15,8 +15,9 @@
 |---|---|---|
 | `HAE Creator Design System V0.1.md` | 规范本体：Tokens / Typography / Components / Interaction / AI 十条指令 | DECIDED（V0.1 基线） |
 | `HAE Creator Design System - 设计逆向分析.md` | 证据链：40 套源配色的程序化统计，规范里每个数值的出处 | 保留，只增不删 |
-| `README.md` | 人类入口：这是什么、怎么用 | — |
-| `_scratch/` | 工作缓存：分析脚本 + rime-color-scheme 源仓库克隆（已 gitignore） | 可再生产 |
+| `README.md` | 人类入口：这是什么、设计哲学（立场）、怎么用 | — |
+| `decisions/` | 决策与外部方案评审记录：保留「方案→结论→原因」含落地勘误 | 只增不删 |
+| `_scratch/` | 工作缓存（已 gitignore）：复算脚本 + rime-color-scheme 源克隆 + `proposals/` 外部提案原件 | 可再生产 |
 
 ## 3. 消费方式（写死，防漂移）
 
@@ -31,6 +32,7 @@
 - 每次升版：文件名带版本号（V0.1 → V0.2），旧版文件保留在本仓库作为历史；终稿内维护 Changelog。
 - 决策状态标注沿用全局手册：DECIDED / EXPLORING / DEFERRED / REJECTED。当前：数据可视化色板、Figma 变量导出、多品牌换肤流水线 = DEFERRED（首个真实项目验证后再做）。
 - 分析报告中的数值均可用 `_scratch/analyze_rime.py` 对源仓库复算；改规范前先看证据，别凭感觉。
+- 外部 AI / 协作者提交的优化方案：先批判评审（对照 §5 红线、标 DECIDED/EXPLORING/DEFERRED/REJECTED），结论与理由记入 `decisions/日期_主题.md`，原始长文归档到 `_scratch/proposals/`（不入库）。**数值一律本地复算后再采纳，绝不采信外部报的数**（本项目唯一核心能力就是"可复算"，外部 AI 在此项上不可靠）。
 
 ## 5. 红线（继承全局 AGENTS.md，此处最相关三条）
 
