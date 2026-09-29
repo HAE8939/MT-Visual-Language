@@ -4,7 +4,7 @@ HAE 个人 AI 产品设计系统 · 唯一真源仓库。
 
 这里存放的不是某个产品的代码，而是一套**跨项目复用的 UI 设计语言**：任何项目要做界面，先来这里读规范。目标是让 MT-Deck、博客、未来的 AI 工具在视觉上像"同一家人"——纸感背景、单一高饱和 accent、气声描边、无阴影、层级靠字重与对比度。
 
-> 想先看它实际长什么样？→ **[打开完整产品介绍页](https://hae8939.github.io/MT-Visual-Language/intro.html)**
+> 想先看它实际长什么样？→ **[打开完整产品介绍页](https://hae8939.github.io/MT-Visual-Language/)**
 
 ## 设计哲学
 
@@ -24,7 +24,7 @@ HAE 个人 AI 产品设计系统 · 唯一真源仓库。
 HAE Creator Design System V0.1.md        ← 规范本体（自包含，可直接投喂 AI 编程助手）
 HAE Creator Design System - 设计逆向分析.md  ← 证据链（40 套源配色的程序化统计）
 AGENTS.md                                ← 仓库维护规则（真源原则、指针引用、版本迭代）
-intro.html                               ← 产品介绍页（可视化展示，README 顶部可点击进入）
+index.html                               ← 产品介绍页（可视化展示，README 顶部可点击进入）
 ```
 
 ## 起源
