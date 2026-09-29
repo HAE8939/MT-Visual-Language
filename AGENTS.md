@@ -1,7 +1,7 @@
 # AGENTS.md - 项目工作手册 · MT-Visual-Language
 
 > 本仓库 = HAE 个人设计系统的**唯一真源（Single Source of Truth）**。
-> 不产出代码、不跑服务；交付物是 Markdown 设计规范的版本化沉淀。更新：2026-09-28
+> 不产出代码、不跑服务；交付物是 Markdown 设计规范的版本化沉淀。更新：2026-09-29
 
 ## 1. 项目定位
 
@@ -15,7 +15,8 @@
 |---|---|---|
 | `HAE Creator Design System V0.1.md` | 规范本体：Tokens / Typography / Components / Interaction / AI 十条指令 | DECIDED（V0.1 基线） |
 | `HAE Creator Design System - 设计逆向分析.md` | 证据链：40 套源配色的程序化统计，规范里每个数值的出处 | 保留，只增不删 |
-| `README.md` | 人类入口：这是什么、设计哲学（立场）、怎么用 | — |
+| `README.md` | GitHub 仓库门面与总索引：这是什么、包含哪些文件、怎么用、设计立场 | — |
+| `intro.html` | 面向用户的产品介绍页（可经 GitHub Pages 渲染）：讲特点与观感、重美观，不堆技术细节。与 README 互补——README 是索引，intro 是展示 | 展示物，随规范升版同步 |
 | `decisions/` | 决策与外部方案评审记录：保留「方案→结论→原因」含落地勘误 | 只增不删 |
 | `_scratch/` | 工作缓存（已 gitignore）：复算脚本 + rime-color-scheme 源克隆 + `proposals/` 外部提案原件 | 可再生产 |
 
@@ -36,6 +37,6 @@
 
 ## 5. 红线（继承全局 AGENTS.md，此处最相关三条）
 
-- 不为完整性扩范围：本仓库拒绝在 V0.1 阶段生成 CSS/Tailwind 产物（DEFERRED）。
+- 不为完整性扩范围：本仓库拒绝在 V0.1 阶段生成**供下游消费的 CSS / Tailwind / 组件库 / Figma 导出产物**（DEFERRED）。注：`intro.html` 是面向用户的可视化展示页、非上述工程产物，不受此条约束，勿误删。
 - accent 插槽制：换主题只改 `--accent` 一族 4 值；永不修改品牌原色本身。
 - 状态色与 accent 撞车（默认铁锈红 vs danger）是已知风险，落地项目时优先换非红系 accent，而不是加例外规则。

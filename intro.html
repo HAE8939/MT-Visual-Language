@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="HAE Creator Design System — 一套为 AI 产品而生的个人视觉语言。纸感底、单点原色、气声描边、无阴影，跨项目复用、AI 可直接执行。">
+<title>HAE Creator Design System · 产品介绍</title>
+<style>
+/* ============ Tokens · 取自 HAE Creator Design System V0.1 §2 ============ */
+:root{
+  --canvas:#F4F1EA; --surface:#FAF8F3; --sunken:#EDEAE2;
+  --ink:#2B2A26; --sec:#6E6A5E; --dis:#A8A294;
+  --accent:#B7472A; --accent-ink:#7A2E1A; --tint:#F3E3DB;
+  --border:#E7E1D6;
+  --r-out:10px; --r-in:6px;
+  --s4:4px; --s8:8px; --s12:12px; --s16:16px; --s24:24px; --s32:32px; --s48:48px; --s72:72px; --s96:96px;
+  --ui:"Inter","PingFang SC","HarmonyOS Sans SC","Noto Sans SC",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Maple Mono","Fira Code",ui-monospace,SFMono-Regular,monospace;
+}
+[data-theme="dark"]{
+  --canvas:#16130F; --surface:#1E1A15; --sunken:#13100C;
+  --ink:#EDE9E1; --sec:#A8A294; --dis:#5C574C;
+  --accent:#B7472A; --accent-ink:#D9754F; --tint:rgba(183,71,42,.14);
+  --border:#2A251E;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--canvas);color:var(--ink);font:15px/1.7 var(--ui);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  transition:background-color 200ms ease-out,color 200ms ease-out}
+a{color:var(--accent-ink);text-decoration:none;font-weight:600}
+.wrap{width:min(1080px,calc(100% - 48px));margin-inline:auto}
+.mono{font-family:var(--mono)}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--canvas) 92%,transparent);border-bottom:1px solid var(--border)}
+.nav__in{height:64px;display:flex;align-items:center;justify-content:space-between;gap:var(--s24)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;color:var(--ink);letter-spacing:-.01em}
+.brand .mark{width:12px;height:12px;border-radius:3px;background:var(--accent)}
+.nav__links{display:flex;gap:var(--s24);color:var(--sec);font-size:13px}
+.nav__links a{color:inherit;font-weight:400}
+.nav__links a:hover{color:var(--ink)}
+.nav__right{display:flex;align-items:center;gap:var(--s12)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:1px solid var(--border);
+  border-radius:var(--r-in);background:var(--surface);color:var(--ink);font:600 14px/1 var(--ui);cursor:pointer;
+  transition:border-color 120ms ease-out,filter 120ms ease-out,background-color 120ms ease-out}
+.btn:hover{border-color:#d5cdbf}
+[data-theme="dark"] .btn:hover{border-color:#3a342b}
+.btn--primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn--primary:hover{filter:brightness(.96)}
+.toggle{width:38px;height:38px;padding:0;justify-content:center;font-size:15px;color:var(--sec)}
+.toggle::before{content:"\26FE"}
+[data-theme="dark"] .toggle::before{content:"\2600"}
+
+/* hero */
+.hero{padding:var(--s96) 0 var(--s72);border-bottom:1px solid var(--border)}
+.eyebrow{font:650 12px/1 var(--mono);letter-spacing:.12em;color:var(--accent-ink)}
+h1{font-size:34px;line-height:1.26;letter-spacing:-.02em;font-weight:600;max-width:20ch;margin:16px 0}
+.lead{font-size:17px;color:var(--sec);max-width:60ch;margin-bottom:var(--s32)}
+.actions{display:flex;gap:var(--s12);flex-wrap:wrap}
+.statement{margin-top:var(--s48);padding-top:var(--s24);border-top:1px solid var(--border);
+  display:grid;grid-template-columns:1.25fr .75fr;gap:var(--s32);align-items:end}
+.statement .q{font-size:20px;line-height:1.5;font-weight:600;letter-spacing:-.01em}
+.statement .meta{font-size:13px;color:var(--sec);text-align:right;text-wrap:balance;line-height:1.7}
+
+/* section shell */
+section{padding:var(--s72) 0;border-bottom:1px solid var(--border)}
+.head{display:grid;grid-template-columns:auto 1fr;gap:var(--s8) var(--s24);align-items:baseline;margin-bottom:var(--s40,40px)}
+.head .k{font:650 12px/1.5 var(--mono);letter-spacing:.08em;color:var(--accent-ink)}
+.head h2{font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
+.head p{color:var(--sec);max-width:62ch;font-size:14px}
+
+/* benefit cards */
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--s16)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-out);padding:var(--s24)}
+.card .num{font:12px var(--mono);color:var(--accent-ink);margin-bottom:12px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.card p{font-size:13.5px;color:var(--sec);line-height:1.65}
+
+/* palette + slots */
+.sw-label{font:600 13px var(--ui);color:var(--ink);margin:var(--s32) 0 var(--s12)}
+.palette{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--s12)}
+.sw{border:1px solid var(--border);border-radius:var(--r-out);overflow:hidden;background:var(--surface)}
+.sw .chip-color{height:64px}
+.sw .info{padding:10px 12px}
+.sw b{display:block;font-size:12px;font-weight:600}
+.sw code{font:11px var(--mono);color:var(--sec)}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s12)}
+.slot{text-align:center;border:1px solid var(--border);border-radius:var(--r-out);padding:var(--s16)}
+.slot .dot{width:44px;height:44px;border-radius:50%;margin:0 auto 10px}
+.slot .nm{font-size:13px;font-weight:600}
+.slot .vv{font:11px var(--mono);color:var(--sec);margin-top:2px}
+
+/* component + chat demo */
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:var(--s24);align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-out);padding:var(--s24)}
+.panel .cap{font:11px var(--mono);letter-spacing:.06em;color:var(--sec);margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:var(--s12);align-items:center;margin-bottom:var(--s16)}
+.row:last-child{margin-bottom:0}
+.lbl{font-size:12px;color:var(--sec);width:100%;margin-bottom:-6px}
+.input{flex:1;min-width:180px;padding:8px 12px;font:14px var(--ui);color:var(--ink);background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-out);outline:none;transition:border-color 120ms ease-out}
+.input::placeholder{color:var(--dis)}
+.input:focus{border-color:var(--accent);box-shadow:inset 0 0 0 .5px var(--accent)}
+.tagchip{display:inline-flex;padding:4px 10px;border-radius:var(--r-in);font-size:12px;font-weight:500;background:var(--tint);color:var(--accent-ink)}
+.listitem{padding:8px 14px;border-radius:var(--r-in);font-size:14px;color:var(--ink)}
+.listitem--on{background:var(--accent);color:#fff;font-weight:600}
+.chat{border:1px solid var(--border);border-radius:var(--r-out);overflow:hidden;background:var(--canvas)}
+.chat__hd{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.chat__hd .sub{font-weight:400;color:var(--sec);font-size:12px}
+.chat__bd{padding:var(--s24)}
+.msg{max-width:84%;margin-bottom:var(--s16);font-size:14px}
+.msg--user{margin-left:auto;padding:10px 16px;background:var(--surface);border-left:3px solid var(--accent);border-radius:var(--r-out)}
+.msg--ai b{font-weight:600}
+.msg--ai p{margin-bottom:6px}
+.cur{display:inline-block;width:1.5px;height:14px;background:var(--accent);vertical-align:text-bottom;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* scenarios */
+.scene{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s12)}
+.scene .s{border:1px solid var(--border);border-radius:var(--r-out);background:var(--surface);padding:var(--s16);text-align:center;font-size:13.5px;font-weight:600}
+.scene .s span{display:block;font-weight:400;font-size:12px;color:var(--sec);margin-top:4px}
+
+/* CTA */
+.cta{text-align:center;padding:var(--s96) 0}
+.cta h2{font-size:24px;font-weight:600;letter-spacing:-.01em;margin-bottom:12px}
+.cta p{color:var(--sec);max-width:52ch;margin:0 auto var(--s24)}
+.cta .actions{justify-content:center}
+
+footer{padding:var(--s48) 0 var(--s72);color:var(--sec);font-size:12.5px;border-top:1px solid var(--border)}
+.foot{display:flex;justify-content:space-between;gap:var(--s24);flex-wrap:wrap}
+
+@media(max-width:860px){
+  .nav__links{display:none}
+  .hero{padding:var(--s72) 0 var(--s48)}
+  h1{font-size:26px}
+  .statement,.demo,.grid3{grid-template-columns:1fr}
+  .statement .meta{text-align:left}
+  .palette{grid-template-columns:repeat(3,1fr)}
+  .slots,.scene{grid-template-columns:repeat(2,1fr)}
+  section{padding:var(--s48) 0}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}.cur{animation:none}}
+</style>
+</head>
+<body>
+<nav><div class="wrap nav__in">
+  <a class="brand" href="#top"><span class="mark"></span>HAE Creator Design System</a>
+  <div class="nav__links"><a href="#why">为什么选它</a><a href="#look">界面效果</a><a href="#scene">适用场景</a></div>
+  <div class="nav__right">
+    <a class="btn" href="https://github.com/HAE8939/MT-Visual-Language" target="_blank" rel="noreferrer">GitHub ↗</a>
+    <button class="btn toggle" id="themeBtn" aria-label="切换明暗主题"></button>
+  </div>
+</div></nav>
+
+<main id="top">
+<!-- Hero -->
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">HAE CREATOR DESIGN SYSTEM · V0.1</div>
+  <h1>一套为 AI 产品而生的个人视觉语言。</h1>
+  <p class="lead">让每一个界面都像"同一家人"。纸感背景、单点原色、气声描边、克制层级——它既是给人看的设计规范，也是能直接投喂给 AI 编程助手、让机器照着做的产品语言。</p>
+  <div class="actions">
+    <a class="btn btn--primary" href="https://github.com/HAE8939/MT-Visual-Language" target="_blank" rel="noreferrer">查看 GitHub 仓库</a>
+    <a class="btn" href="https://github.com/HAE8939/MT-Visual-Language/blob/main/HAE%20Creator%20Design%20System%20V0.1.md" target="_blank" rel="noreferrer">阅读完整规范</a>
+  </div>
+  <div class="statement">
+    <div class="q">克制即审美，可复算即可信。<br>为"删到什么程度"负责，不为"加了多少"负责。</div>
+    <div class="meta">面向 AI 对话、Prompt / 资产管理、创作工作台、命令面板、长文阅读。<br>V0.1 基线 · 跨项目唯一真源</div>
+  </div>
+</div></header>
+
+<!-- 为什么选它 -->
+<section id="why"><div class="wrap">
+  <div class="head"><div class="k">§ 01</div><div><h2>为什么选它</h2>
+    <p>它解决的不是"这一个界面好不好看"，而是"一连串界面、一代代项目，能不能始终像同一家人"。六个理由：</p></div></div>
+  <div class="grid3">
+    <div class="card"><div class="num">01</div><h3>跨项目一致</h3><p>一处定义、处处同族。下游只引用不复制，界面不会各说各话、悄悄漂移成几十种样子。</p></div>
+    <div class="card"><div class="num">02</div><h3>为 AI 而生</h3><p>规范本身就是可执行的指令。直接投喂给编程助手，AI 生成的界面自动守规矩、不跑偏。</p></div>
+    <div class="card"><div class="num">03</div><h3>长时间不累</h3><p>界面是一张暖调低饱和的纸，不刺眼。专为需要盯很久的创作、调试与长文阅读而生。</p></div>
+    <div class="card"><div class="num">04</div><h3>克制耐看</h3><p>只留一个原色、删到不能再删。没有花哨渐变与阴影，越用越顺眼，也不会很快过时。</p></div>
+    <div class="card"><div class="num">05</div><h3>可复算即可信</h3><p>每个数值都有出处、能重新算出来。你不必膜拜结论，能顺着证据自己判断、继续往前走。</p></div>
+    <div class="card"><div class="num">06</div><h3>纯文本自由</h3><p>Markdown + Git：能读、能 diff、能被任意助手使用，不锁定工具与平台，始终属于你。</p></div>
+  </div>
+</div></section>
+
+<!-- 界面效果 -->
+<section id="look"><div class="wrap">
+  <div class="head"><div class="k">§ 02</div><div><h2>它能做出什么样的界面</h2>
+    <p>一套克制的中性纸色打底，全界面只允许一个高饱和 accent——它只属于"当前选中 / 主操作"。右上角可切换美术馆黑。换主题时，只需替换一整族 accent 值，其余全部不动。</p></div></div>
+
+  <div class="sw-label">纸感色板</div>
+  <div class="palette">
+    <div class="sw"><div class="chip-color" style="background:#F4F1EA"></div><div class="info"><b>Canvas 纸</b><code>#F4F1EA</code></div></div>
+    <div class="sw"><div class="chip-color" style="background:#FAF8F3"></div><div class="info"><b>Surface 卡纸</b><code>#FAF8F3</code></div></div>
+    <div class="sw"><div class="chip-color" style="background:#EDEAE2"></div><div class="info"><b>Sunken</b><code>#EDEAE2</code></div></div>
+    <div class="sw"><div class="chip-color" style="background:#2B2A26"></div><div class="info"><b>Ink 墨</b><code>#2B2A26</code></div></div>
+    <div class="sw"><div class="chip-color" style="background:#E7E1D6"></div><div class="info"><b>Border 气声</b><code>#E7E1D6</code></div></div>
+    <div class="sw"><div class="chip-color" style="background:#B7472A"></div><div class="info"><b>Accent</b><code>#B7472A</code></div></div>
+  </div>
+
+  <div class="sw-label">内置 4 套 accent 气质 · 换肤只改一族值</div>
+  <div class="slots">
+    <div class="slot"><div class="dot" style="background:#B7472A"></div><div class="nm">铁锈（默认）</div><div class="vv">暖 · 手作者</div></div>
+    <div class="slot"><div class="dot" style="background:#002FA7"></div><div class="nm">克莱因蓝</div><div class="vv">技术 · 冷静</div></div>
+    <div class="slot"><div class="dot" style="background:#81D8D0"></div><div class="nm">蒂芙尼青</div><div class="vv">轻盈 · 通透</div></div>
+    <div class="slot"><div class="dot" style="background:#009473"></div><div class="nm">祖母绿</div><div class="vv">生产力 · 沉稳</div></div>
+  </div>
+
+  <div class="sw-label">组件语气 · 系统最终落到交互</div>
+  <div class="demo">
+    <div class="panel">
+      <div class="cap">COMPONENTS / 语气样本</div>
+      <div class="row"><span class="lbl">按钮</span><button class="btn btn--primary">主操作</button><button class="btn">次要操作</button></div>
+      <div class="row"><span class="lbl">输入框</span><input class="input" placeholder="在此输入 Prompt…"></div>
+      <div class="row"><span class="lbl">标签 Chip</span><span class="tagchip">已选中</span><span class="tagchip">Prompt</span><span class="tagchip">3 references</span></div>
+      <div class="row" style="flex-direction:column;align-items:stretch"><span class="lbl">选中态 · 全系统唯一彩色出口</span>
+        <span class="listitem">GPT-4o</span><span class="listitem listitem--on">Claude 3.5 Sonnet</span><span class="listitem">Gemini 2.0</span></div>
+    </div>
+    <div class="chat">
+      <div class="chat__hd"><span>创作工作台 · Prompt 调试</span><span class="sub">3 变量 · 128 tokens</span></div>
+      <div class="chat__bd">
+        <div class="msg msg--user">帮我优化这段 Prompt，让输出更简洁、更有结构感。</div>
+        <div class="msg msg--ai">
+          <p>好的，我从三个维度重新组织：</p>
+          <p><b>1. 角色定义</b> — 把模糊的"你是一个助手"改为具体领域专家。</p>
+          <p><b>2. 输出格式</b> — 用 Markdown 分节，每节不超过 3 条。</p>
+          <p><b>3. 约束条件</b> — 明确"不要做什么"往往比"要做什么"更有效。<span class="cur"></span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 适用场景 -->
+<section id="scene"><div class="wrap">
+  <div class="head"><div class="k">§ 03</div><div><h2>适用场景</h2>
+    <p>为高密度、长时段的 AI 软件而生。这几类界面是它的主场：</p></div></div>
+  <div class="scene">
+    <div class="s">AI 对话<span>问答 · 助手 · 多轮</span></div>
+    <div class="s">Prompt 管理<span>资产 · 变量 · 版本</span></div>
+    <div class="s">创作工作台<span>调试 · 编排 · 生成</span></div>
+    <div class="s">命令面板<span>检索 · 快捷指令</span></div>
+    <div class="s">长文阅读<span>文档 · 笔记 · 报告</span></div>
+  </div>
+</div></section>
+
+<!-- CTA -->
+<section class="cta" style="border-bottom:none"><div class="wrap">
+  <h2>让下一个界面，从同一张纸开始。</h2>
+  <p>整份规范自包含、可直接投喂给任意 AI 编程助手；仓库是唯一真源，改一处、处处一致。</p>
+  <div class="actions">
+    <a class="btn btn--primary" href="https://github.com/HAE8939/MT-Visual-Language" target="_blank" rel="noreferrer">查看 GitHub 仓库</a>
+    <a class="btn" href="https://github.com/HAE8939/MT-Visual-Language/blob/main/HAE%20Creator%20Design%20System%20V0.1.md" target="_blank" rel="noreferrer">阅读完整规范</a>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap foot">
+  <span>© 2026 HAE · CC0 / MIT · 自用无约束</span>
+  <span>MT-Visual-Language · 唯一真源仓库 · V0.1</span>
+</div></footer>
+
+<script>
+  const btn=document.getElementById('themeBtn');
+  btn.addEventListener('click',()=>{
+    const h=document.documentElement;
+    h.setAttribute('data-theme', h.getAttribute('data-theme')==='dark'?'light':'dark');
+  });
+</script>
+</body>
+</html>
