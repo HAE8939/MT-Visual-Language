@@ -22,16 +22,17 @@ HAE 个人 AI 产品设计系统 · 唯一真源仓库。
 ## 内容
 
 ```
-HAE Creator Design System V0.2.md        ← 当前规范本体（自包含，可直接整份投喂 AI 编程助手）
-HAE Creator Design System V0.1.md        ← 上一版历史（保留，勿删）
+HAE Creator Design System V0.3.md        ← 当前规范本体（自包含，可直接整份投喂 AI 编程助手）
+HAE Creator Design System V0.2.md        ← 上一版历史（并入质量层；保留，勿删）
+HAE Creator Design System V0.1.md        ← 更早版历史（保留，勿删）
 HAE Creator Design System - 设计逆向分析.md  ← 证据链（40 套源配色的程序化统计）
 AGENTS.md                                ← 仓库维护规则（真源原则、指针引用、版本迭代）
 decisions/                               ← 外部方案批判评审记录（含 V0.2 质量层来源）
 index.html                               ← 产品介绍页（可视化展示，README 顶部可点击进入）
-gallery.html                             ← 组件画廊 + V0.2 检查台（规范的真实渲染与自检面）
+gallery.html                             ← 组件画廊（把 V0.3 规范渲染成真实界面，公开可交互）
 ```
 
-V0.2 在不动任何 token 的前提下，把系统从"视觉规范"升级为**视觉语言 + 设计质量控制系统**：新增国际质量 Benchmark（当标尺不当模板）、反 AI 模板清单、11+1 维质量模型、页面节奏、设计张力、L0–L4 动效语言、以及页面完成后必走的 Design QA 自检闭环。
+V0.2 在不动任何 token 的前提下，把系统从"视觉规范"升级为**视觉语言 + 设计质量控制系统**：新增国际质量 Benchmark（当标尺不当模板）、反 AI 模板清单、11+1 维质量模型、页面节奏、设计张力、L0–L4 动效语言、以及页面完成后必走的 Design QA 自检闭环。**V0.3** 以组件画廊实测反向回灌：补齐 §3.1 中文段落排版、§7.4 负空间系统、§4 五类组件规则，并把克莱因蓝校准为钴蓝 `#3368A0`。
 
 ## 起源
 
@@ -47,10 +48,10 @@ V0.2 在不动任何 token 的前提下，把系统从"视觉规范"升级为**�
 
 ## 怎么用
 
-**给 AI 编程助手**：把 `HAE Creator Design System V0.2.md` 整份放进项目上下文，或在项目 AGENTS.md 里加一行指针：
+**给 AI 编程助手**：把 `HAE Creator Design System V0.3.md` 整份放进项目上下文，或在项目 AGENTS.md 里加一行指针：
 
 ```
-UI 相关任务必读并遵守 <本仓库路径>/HAE Creator Design System V0.2.md
+UI 相关任务必读并遵守 <本仓库路径>/HAE Creator Design System V0.3.md
 ```
 
 **给人**：直接读终稿；想知道"规则为什么这么定"，查分析报告的数据附录。
