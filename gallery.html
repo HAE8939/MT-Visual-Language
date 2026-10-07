@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light" data-accent="rust">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HAE 设计系统 V0.2 · 组件画廊</title>
+<!--
+  HAE 设计系统 V0.2 · 组件画廊（正式仓库文件 gallery.html）。
+  把规范渲染成真实界面供人浏览：只用 V0.2 §2–5 的 token，未新增品牌色；主题/皮肤切换为内存态，刷新回亮色·铁锈。
+  已接入 index/README 导航并作为第二个 GitHub Pages 视图发布；内部核验用的"检查台"已从公开版移除。
+-->
+<style>
+/* ===================================================================
+   TOKENS · 严格取自 HAE Creator Design System V0.2 §2–5
+   纪律：单 accent · 纸感 · 气声描边 · 无默认阴影 · 圆角仅 10/6 · 间距仅 4/8/12/16/24/32/48 · 字号仅 6 档 · 字重仅 400/600
+   =================================================================== */
+
+/* —— 主题层：canvas / ink / border（全系统对比度的计算零点，锁定不随皮肤变）—— */
+:root, [data-theme="light"]{
+  --canvas:#F4F1EA; --surface:#FAF8F3; --sunken:#EDEAE2;
+  --ink:#2B2A26; --sec:#6E6A5E; --dis:#A8A294;
+  --border:#E7E1D6; --border-strong:#D8D0C1;
+  --success:#3E7C5B; --warning:#8A5F1B; --danger:#A32821;
+  --e1:0 1px 2px rgba(26,20,14,.06);
+  --e2:0 4px 12px rgba(26,20,14,.10);
+  --e3:0 12px 32px rgba(26,20,14,.16);
+  --overlay:rgba(26,20,14,.06);
+  --shadower:var(--e2);
+}
+[data-theme="dark"]{
+  --canvas:#16130F; --surface:#1E1A15; --sunken:#13100C;
+  --ink:#EDE9E1; --sec:#A8A294; --dis:#5C574C;
+  --border:#2A251E; --border-strong:#3A342B;
+  /* 暗色一律用白色叠加 6/9/14% 代替阴影（§2.3 / §4） */
+  --e1:none; --e2:none; --e3:none;
+  --overlay:rgba(255,255,255,.06);
+  --shadower:inset 0 0 0 1px rgba(255,255,255,.10);
+}
+
+/* —— accent 插槽层：换肤 = 只改这一族（§2.4 · AGENTS 红线：永不改品牌原色本身）—— */
+[data-accent="rust"]   { --accent:#B7472A; --accent-fg:#7A2E1A; --tint:#F3E3DB; --on-accent:#FFFFFF; }
+[data-accent="klein"]  { --accent:#3368A0; --accent-fg:#2A4E7A; --tint:#DCE8F4; --on-accent:#FFFFFF; }
+[data-accent="tiffany"]{ --accent:#81D8D0; --accent-fg:#0A7680; --tint:#E2F2F0; --on-accent:#0A7680; }
+[data-accent="emerald"]{ --accent:#009473; --accent-fg:#0B5C47; --tint:#DBF0EB; --on-accent:#FFFFFF; }
+/* 暗色 tint 用半透 accent；非默认皮肤暗色前景规范未逐一定义 → 见 §9.5/9.7（本页沿用推导值供你判） */
+[data-theme="dark"][data-accent="rust"]   { --accent-fg:#D9754F; --tint:rgba(183,71,42,.16); }
+[data-theme="dark"][data-accent="klein"]  { --accent-fg:#8FB4DE; --tint:rgba(51,104,160,.34); }
+[data-theme="dark"][data-accent="tiffany"]{ --accent-fg:#81D8D0; --tint:rgba(129,216,208,.16); }
+[data-theme="dark"][data-accent="emerald"]{ --accent-fg:#4FB99B; --tint:rgba(0,148,115,.18); }
+
+/* —— 几何 & 间距 & 字体（§3 · §4）—— */
+:root{
+  --r-out:10px; --r-in:6px;                       /* 圆角只此两档 */
+  --s4:4px; --s8:8px; --s12:12px; --s16:16px; --s24:24px; --s32:32px; --s48:48px; --s64:64px; --s96:96px; /* 组件内 4–12 · 组件间 16–24 · 页面级 32–48 · 长页 section 级上探 64–96（§9.12 实测补） */
+  --ui:"Inter","PingFang SC","Microsoft YaHei","HarmonyOS Sans SC","Noto Sans SC",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Maple Mono","Fira Code",ui-monospace,SFMono-Regular,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--canvas);color:var(--ink);font:15px/1.7 var(--ui);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  transition:background-color 200ms ease-out,color 200ms ease-out}
+.wrap{width:min(1120px,calc(100% - 48px));margin-inline:auto}
+a{color:var(--accent-fg);text-decoration:none}
+.mono{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--accent-fg);outline-offset:2px}
+
+/* ---------- 导航 ---------- */
+.nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--canvas) 90%,transparent);border-bottom:1px solid var(--border)}
+.nav__in{height:60px;display:flex;align-items:center;justify-content:space-between;gap:var(--s16)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.brand .mark{width:11px;height:11px;border-radius:3px;background:var(--accent);flex:none}
+.nav__links{display:flex;gap:var(--s24);font-size:13px;color:var(--sec);white-space:nowrap}
+.nav__links a{color:inherit;font-weight:400;transition:color 120ms ease-out}
+.nav__links a:hover{color:var(--ink)}
+
+/* ---------- 检查工具条 ---------- */
+.hud{position:sticky;top:60px;z-index:29;background:var(--surface);border-bottom:1px solid var(--border)}
+.hud__in{display:flex;align-items:center;gap:var(--s16);flex-wrap:wrap;padding:var(--s12) 0;font-size:13px}
+.hud .lab{color:var(--sec);font:600 12px/1 var(--mono);letter-spacing:.08em}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--r-in);overflow:hidden;background:var(--canvas)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--ink);font:400 13px var(--ui);
+  padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;
+  border-right:1px solid var(--border);transition:background-color 120ms ease-out,color 120ms ease-out}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:color-mix(in srgb,var(--overlay) 60%,transparent)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.seg .dot{width:10px;height:10px;border-radius:50%;background:var(--d);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.hud__hint{color:var(--sec);font-size:12px;flex:1;min-width:200px}
+.hud__hint b{color:var(--accent-fg);font-weight:600}
+
+/* ---------- 章节骨架 ---------- */
+header.hero{padding:var(--s96) 0 var(--s64);border-bottom:1px solid var(--border)}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.14em;color:var(--accent-fg)}
+.hero__grid{display:grid;grid-template-columns:1.3fr .7fr;gap:var(--s64);align-items:center;margin-top:var(--s32)}
+.hero h1{font-size:32px;line-height:1.3;letter-spacing:-.02em;font-weight:600;max-width:16ch}
+.hero .lead{font-size:17px;color:var(--sec);max-width:34ch;margin-top:var(--s16);line-height:1.5}
+/* 视觉签名：灰场中一点原色——用设计演示 §1 灵魂，而非用文字解释 */
+.proof{border:1px solid var(--border);border-radius:var(--r-out);background:var(--surface);padding:var(--s24)}
+.proof .dots{display:grid;grid-template-columns:repeat(8,1fr);gap:var(--s8)}
+.proof .d{aspect-ratio:1;border-radius:var(--r-in);background:color-mix(in srgb,var(--ink) 8%,var(--canvas))}
+.proof .d.on{background:var(--accent)}
+.proof .cap2{font-size:12px;color:var(--sec);margin-top:var(--s16);line-height:1.5}
+.legend{margin-top:var(--s24);display:inline-flex;gap:8px;align-items:center;font-size:12px;color:var(--sec);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-in);padding:8px 12px}
+.legend .flag{color:var(--warning);font-weight:600}
+
+section{padding:var(--s64) 0;border-bottom:1px solid var(--border)}
+.head{display:grid;grid-template-columns:auto 1fr;column-gap:var(--s12);row-gap:var(--s12);align-items:baseline;margin-bottom:var(--s48)}
+.head .k{font:600 12px/1.5 var(--mono);letter-spacing:.06em;color:var(--accent-fg)}
+.head h2{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.head .d{color:var(--sec);font-size:13px;line-height:1.75;max-width:44em;grid-column:1/-1}
+
+/* 规范依据脚注：安静档（secondary），⚑ 待验证用 warning 语义色，不抢正文 */
+.spec{margin-top:var(--s16);border-left:2px solid var(--border);padding:2px 0 2px 12px;
+  font:400 13px/1.6 var(--ui);color:var(--sec);max-width:80ch}
+.spec code{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.spec .tag{display:inline-block;font:600 12px/1 var(--mono);letter-spacing:.03em;color:var(--sec);
+  border:1px solid var(--border);border-radius:var(--r-in);padding:2px 6px;margin-right:6px;vertical-align:1px}
+.spec .warn .tag{color:var(--warning);border-color:color-mix(in srgb,var(--warning) 34%,var(--border))}
+.jump{font:600 12px var(--mono);white-space:nowrap}
+
+/* 通用小组件 */
+.cap{font:600 12px/1 var(--mono);letter-spacing:.07em;color:var(--sec);margin-bottom:var(--s12)}
+.grid{display:grid;gap:var(--s24)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-out);padding:var(--s24)}
+.rowline{display:flex;flex-wrap:wrap;gap:var(--s16);align-items:center}
+.stack{display:flex;flex-direction:column;gap:var(--s16)}
+.two{grid-template-columns:1fr 1fr}
+
+/* ---------- 1 Typography ---------- */
+.type-specimens>*+*{margin-top:var(--s16)}
+.t-display{font-size:32px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+.t-h1{font-size:20px;font-weight:600;line-height:1.4}
+.t-h2{font-size:17px;font-weight:600;line-height:1.4}
+.t-h3{font-size:15px;font-weight:600;line-height:1.4}
+.t-body{font-size:15px;font-weight:400;line-height:1.7;max-width:68ch}
+.t-label{font-size:13px;font-weight:400;color:var(--sec)}
+.t-code{font:400 14px/1.6 var(--mono);background:var(--sunken);border-radius:var(--r-in);padding:var(--s8) var(--s12);display:inline-block}
+.t-emph{font-size:15px}
+.t-emph b{font-weight:600}
+.contrast-demo{display:flex;gap:var(--s32);flex-wrap:wrap;align-items:flex-start}
+.contrast-demo div{font-size:15px;line-height:1.6}
+.contrast-demo .p{color:var(--ink)} .contrast-demo .s{color:var(--sec)} .contrast-demo .x{color:var(--dis)}
+.cn-body{font-size:15px;line-height:1.85;max-width:38em;color:var(--ink);text-align:left}
+.cn-dodont{display:grid;gap:12px;margin-top:16px;font-size:13px}
+.cn-bad,.cn-good{display:flex;gap:10px;align-items:baseline;padding-left:12px;border-left:2px solid var(--border)}
+.cn-bad{border-left-color:var(--danger)} .cn-good{border-left-color:var(--success)}
+.cn-bad .lab,.cn-good .lab{font:600 12px var(--mono);white-space:nowrap}
+.cn-bad .lab{color:var(--danger)} .cn-good .lab{color:var(--success)}
+
+/* ---------- 2 Colors ---------- */
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s12)}
+.sw{border:1px solid var(--border);border-radius:var(--r-out);overflow:hidden;background:var(--surface)}
+.sw .c{height:56px}
+.sw .i{padding:var(--s8) var(--s12)}
+.sw b{display:block;font-size:13px;font-weight:600}
+.sw small{font:12px var(--mono);color:var(--sec);display:block;margin-top:4px}
+.elevate{display:flex;gap:var(--s12);flex-wrap:wrap}
+.elev{width:120px;border-radius:var(--r-out);border:1px solid var(--border);padding:var(--s12);font-size:12px;background:var(--surface)}
+.elev .lv{font:600 12px var(--mono);color:var(--sec)} .elev .hex{font-size:13px;margin-top:4px;font-weight:600}
+.elev[data-l="1"]{box-shadow:var(--e1);background:color-mix(in srgb,var(--surface),var(--overlay) 100%)}
+.elev[data-l="2"]{box-shadow:var(--e2);background:color-mix(in srgb,var(--surface),var(--overlay) 200%)}
+.elev[data-l="3"]{box-shadow:var(--e3);background:color-mix(in srgb,var(--surface),var(--overlay) 300%)}
+[data-theme="dark"] .elev{box-shadow:none}
+[data-theme="dark"] .elev[data-l="1"]{background:color-mix(in srgb,var(--surface),white 6%)}
+[data-theme="dark"] .elev[data-l="2"]{background:color-mix(in srgb,var(--surface),white 9%)}
+[data-theme="dark"] .elev[data-l="3"]{background:color-mix(in srgb,var(--surface),white 14%)}
+
+/* ---------- 3 Buttons ---------- */
+.btn{appearance:none;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;min-height:38px;
+  font:600 14px/1 var(--ui);color:var(--ink);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-in);transition:filter 120ms ease-out,border-color 120ms ease-out,background-color 120ms ease-out}
+.btn:hover{border-color:var(--border-strong)}
+.btn:active{filter:brightness(.96)}
+.btn--primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn--primary:hover{filter:brightness(.96);border-color:var(--accent)}
+.btn--text{background:transparent;border-color:transparent;color:var(--accent-fg);padding-inline:var(--s8)}
+.btn--text:hover{background:var(--tint);border-color:transparent}
+.btn--danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn--success{background:var(--success);border-color:var(--success);color:#fff}
+.btn.is-focus{outline:2px solid var(--accent-fg);outline-offset:2px}
+.btn.is-disabled,.btn:disabled{opacity:.5;color:var(--dis);cursor:not-allowed;filter:none;border-color:var(--border)}
+.btn.is-disabled.btn--primary,.btn.is-disabled.btn--danger,.btn.is-disabled.btn--success{opacity:.42;color:var(--on-accent)}
+.btn--block{width:100%;justify-content:center}
+.btn--sm{padding:6px 10px;font-size:13px;min-height:32px}
+.statecard{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.statecard .n{font:400 12px var(--mono);color:var(--sec)}
+.spinner{width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--on-accent) 35%,transparent);
+  border-top-color:var(--on-accent);animation:spin .7s linear infinite;display:inline-block}
+.btn:not(.btn--primary):not(.btn--danger):not(.btn--success) .spinner{border-color:color-mix(in srgb,var(--accent) 30%,transparent);border-top-color:var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ico{width:15px;height:15px;flex:none}
+
+/* ---------- 4 Inputs ---------- */
+.field{display:flex;flex-direction:column;gap:var(--s4)}
+.field label{font-size:13px;font-weight:600;color:var(--ink)}
+.input,textarea,select{font:14px var(--ui);color:var(--ink);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-out);padding:8px 12px;width:100%;transition:border-color 120ms ease-out,box-shadow 120ms ease-out}
+.input::placeholder,textarea::placeholder{color:var(--dis)}
+.input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:inset 0 0 0 .5px var(--accent)}
+.input:disabled{background:var(--canvas);color:var(--dis);cursor:not-allowed}
+textarea{resize:vertical;min-height:72px;line-height:1.6}
+.input--err{border-color:var(--danger);box-shadow:inset 0 0 0 .5px var(--danger)}
+.input--ok{border-color:var(--success);box-shadow:inset 0 0 0 .5px var(--success)}
+.hint{font-size:12px;color:var(--sec)}
+.hint--err{color:var(--danger);display:flex;align-items:center;gap:5px}
+.hint--ok{color:var(--success);display:flex;align-items:center;gap:5px}
+.search{position:relative} .search .input{padding-left:34px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dis)}
+.switch{display:inline-flex;align-items:center;gap:var(--s8);cursor:pointer;user-select:none;font-size:14px}
+.switch input{position:absolute;opacity:0}
+.track{width:38px;height:22px;border-radius:999px;background:var(--border-strong);position:relative;transition:background-color 150ms ease-out;flex:none}
+.track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform 150ms ease-out}
+.switch input:checked+.track{background:var(--accent)}
+.switch input:checked+.track::after{transform:translateX(16px)}
+.switch input:disabled+.track{opacity:.45;cursor:not-allowed}
+.checkrow{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.checkrow input{width:16px;height:16px;accent-color:var(--accent)}
+.checkrow input:disabled{cursor:not-allowed;opacity:.5}
+.checkrow:has(input:disabled){color:var(--dis)}
+
+/* ---------- 5 Cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s16)}
+.asset{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-out);padding:var(--s16);
+  transition:box-shadow 120ms ease-out}
+.asset:hover{box-shadow:var(--e1)}
+[data-theme="dark"] .asset:hover{box-shadow:var(--shadower)}
+.asset h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.asset p{font-size:13px;color:var(--sec);line-height:1.6;margin-bottom:var(--s12)}
+.asset .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--sec);
+  border-top:1px solid var(--border);padding-top:var(--s8)}
+.asset .meta b{font-weight:400}
+
+/* ---------- 6 Chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-in);
+  font:400 12px/1 var(--ui);background:var(--tint);color:var(--accent-fg)}
+.chip--on{background:var(--accent);color:var(--on-accent);font-weight:600}
+.chip--ok{background:color-mix(in srgb,var(--success) 14%,var(--surface));color:var(--success)}
+.chip--warn{background:color-mix(in srgb,var(--warning) 16%,var(--surface));color:var(--warning)}
+.chip--err{background:color-mix(in srgb,var(--danger) 12%,var(--surface));color:var(--danger)}
+.chip .pt{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ---------- 7 Tables ---------- */
+.tablewrap{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font:600 12px var(--mono);letter-spacing:.05em;color:var(--sec);
+  text-transform:uppercase;padding:var(--s12) var(--s12) var(--s8);border-bottom:1px solid var(--border)}
+tbody td{padding:var(--s8) var(--s12);border-bottom:1px solid var(--border);color:var(--ink)}
+tbody tr{transition:background-color 120ms ease-out}
+tbody tr:hover{background:color-mix(in srgb,var(--overlay) 60%,transparent)}
+td.num,th.num{text-align:right;color:var(--sec);font-family:var(--mono);font-size:12px}
+tr.is-on{background:var(--tint)}
+tr.is-on td:first-child{box-shadow:inset 3px 0 0 var(--accent);font-weight:600;color:var(--accent-fg)}
+
+/* ---------- 8 Modal / Palette ---------- */
+.overlay{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:var(--s24);animation:fade 200ms ease-out}
+[data-theme="light"] .overlay{background:rgba(43,42,38,.5)}
+[data-theme="dark"] .overlay{background:rgba(0,0,0,.6)}
+.overlay.open{display:grid}
+.modal{width:min(460px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-out);
+  padding:var(--s24);box-shadow:var(--e3);animation:pop 240ms cubic-bezier(.2,.7,.2,1)}
+[data-theme="dark"] .modal{box-shadow:var(--shadower)}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.modal p{font-size:15px;color:var(--sec);margin-bottom:var(--s24)}
+.modal .foot{display:flex;justify-content:flex-end;gap:var(--s12)}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.palette{max-width:520px;border:1px solid var(--border);border-radius:var(--r-out);background:var(--surface);
+  box-shadow:var(--e2);overflow:hidden}
+[data-theme="dark"] .palette{box-shadow:var(--shadower)}
+.palette .cmd{display:flex;align-items:center;gap:var(--s8);padding:var(--s12) var(--s16);border-bottom:1px solid var(--border);color:var(--sec)}
+.palette .cmd input{border:0;background:transparent;font:15px var(--ui);color:var(--ink);flex:1;outline:none}
+.palette ul{list-style:none;padding:var(--s4)}
+.palette li{display:flex;justify-content:space-between;align-items:center;padding:var(--s8) var(--s12);border-radius:var(--r-in);font-size:14px;cursor:pointer}
+.palette li small{font:12px var(--mono);color:var(--sec)}
+.palette li[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+.palette li[aria-selected="true"] small{color:var(--on-accent);opacity:.8}
+
+/* ---------- 9 Code Block ---------- */
+.codeblock{position:relative;background:var(--sunken);border:1px solid var(--border);border-radius:var(--r-in)}
+.codeblock pre{margin:0;padding:var(--s16);overflow:auto;font:400 14px/1.7 var(--mono);color:var(--ink)}
+.codeblock .copy{position:absolute;top:8px;right:8px;opacity:0;transition:opacity 120ms ease-out}
+.codeblock:hover .copy,.codeblock:focus-within .copy{opacity:1}
+.c-key{color:var(--accent-fg)} .c-com{color:var(--sec);font-style:italic} .c-str{color:var(--success)}
+
+/* ---------- 10 Navigation extras ---------- */
+.tabs{display:flex;gap:var(--s24);border-bottom:1px solid var(--border)}
+.tabs button{appearance:none;border:0;background:transparent;color:var(--sec);font:400 14px var(--ui);
+  padding:var(--s12) 0;margin-bottom:-1px;cursor:pointer;border-bottom:2px solid transparent;transition:color 120ms ease-out,border-color 120ms ease-out}
+.tabs button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.crumb{font-size:13px;color:var(--sec);display:flex;gap:8px;align-items:center} .crumb b{color:var(--ink);font-weight:600}
+.pager{display:flex;gap:var(--s4)} .pager button{min-width:36px;height:36px;border:1px solid var(--border);background:var(--surface);
+  border-radius:var(--r-in);color:var(--ink);font-size:13px;cursor:pointer}
+.pager button[aria-current="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+
+/* ---------- 11 Empty / 12 Loading ---------- */
+.empty{text-align:center;padding:var(--s32) var(--s24);border:1px dashed var(--border-strong);border-radius:var(--r-out);background:var(--surface)}
+.empty .glyph{width:40px;height:40px;margin:0 auto var(--s12);color:var(--dis)}
+.empty h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--sec);margin:0 auto var(--s16);max-width:36ch}
+.skel{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-in);height:14px}
+.skel::after{content:"";position:absolute;inset:0;background:var(--overlay);animation:breathe 1.2s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:.5}to{opacity:1}}
+.skel-line{display:flex;flex-direction:column;gap:var(--s8)}
+.cur{display:inline-block;width:2px;height:1em;background:var(--accent);vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.chatmsg{font-size:14px;line-height:1.7}
+.chatmsg .user{margin:0 0 var(--s16) auto;max-width:84%;background:var(--surface);border-left:3px solid var(--accent);
+  border-radius:var(--r-out);padding:var(--s8) var(--s16)}
+.chatmsg .ai{color:var(--ink)}
+
+footer{padding:var(--s32) 0 var(--s48);color:var(--sec);font-size:12px}
+footer .wrap{display:flex;justify-content:space-between;gap:var(--s24);flex-wrap:wrap}
+
+@media(max-width:860px){
+  .nav__links{display:none} .two,.cards,.swatches{grid-template-columns:1fr}
+  .hero__grid{grid-template-columns:1fr;gap:var(--s24)}
+  .swatches{grid-template-columns:repeat(2,1fr)}
+}
+/* 第二断点：手机端重排——导航改可滑锚点条、触摸区放大 */
+@media(max-width:560px){
+  .nav__links{display:flex;gap:var(--s16);overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .nav__in{flex-wrap:wrap;height:auto;padding:var(--s8) 0;gap:var(--s8)}
+  .seg button,.pager button{min-height:44px}
+  .hud__in{gap:var(--s12)}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto} *{transition:none!important}
+  .spinner,.skel::after,.cur{animation:none!important}
+  .modal,.overlay{animation:none!important}
+  .skel::after{opacity:.8}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="wrap nav__in">
+  <span class="brand"><span class="mark"></span>HAE Design System · V0.2</span>
+  <div class="nav__links">
+    <a href="#type">排版</a><a href="#color">色彩</a><a href="#buttons">按钮</a><a href="#inputs">输入</a>
+    <a href="#cards">卡片</a><a href="#tables">表格</a><a href="#feedback">浮层</a><a href="#states">状态</a>
+  </div>
+  <button class="btn btn--sm" id="themeBtn" aria-label="切换明暗">☾ 美术馆黑</button>
+</div></nav>
+
+<div class="hud"><div class="wrap hud__in">
+  <span class="lab">ACCENT</span>
+  <div class="seg" id="accentSeg" role="group" aria-label="选择 accent 皮肤">
+    <button data-set="rust"    aria-pressed="true"><span class="dot" style="--d:#B7472A"></span>铁锈</button>
+    <button data-set="klein"   aria-pressed="false"><span class="dot" style="--d:#3368A0"></span>钴蓝</button>
+    <button data-set="tiffany" aria-pressed="false"><span class="dot" style="--d:#81D8D0"></span>蒂芙尼青</button>
+    <button data-set="emerald" aria-pressed="false"><span class="dot" style="--d:#009473"></span>祖母绿</button>
+  </div>
+  <button class="btn btn--sm" id="linkBtn">复制当前配色链接</button>
+  <span class="hud__hint">↑ 切皮肤/主题后<b>全页 accent 即时重算</b>，选中块、行、chip、按钮前景按 §2.4 自适应变化——现场查看撞色与可见性。内存态，刷新即回「亮色·铁锈」。</span>
+</div></div>
+
+<main class="wrap">
+
+<!-- ============ HERO：用设计演示灵魂，不用文字解释 ============ -->
+<header class="hero" id="top">
+  <div class="eyebrow">COMPONENT GALLERY · V0.2</div>
+  <div class="hero__grid">
+    <div>
+      <h1>无色世界里，<br>那一点原色。</h1>
+      <p class="lead">把 V0.2 规范渲染成真实界面——只用规范里的 token，逐类摆出组件与观感。右上角切明暗、上方切 accent 皮肤，全页即时重算。</p>
+    </div>
+    <div class="proof" aria-hidden="true">
+      <div class="dots">
+        <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="d"></div><div class="d"></div><div class="d on"></div><div class="d"></div>
+        <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+        <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+      </div>
+      <div class="cap2">一片中性灰里，只允许一个高饱和色——它只属于"当前焦点"。这就是整套语言。</div>
+    </div>
+  </div>
+  <div class="legend"><span class="flag">⚑ 待验证</span> 标记 = 规范此刻仍是 <span class="mono">EXPLORING</span>／待校准／DEFERRED 的点。看到它，说明这块仍在验证中，别当已定论。</div>
+</header>
+
+<!-- ============ 1 TYPOGRAPHY ============ -->
+<section id="type"><div class="head"><span class="k">01</span><h2>排版 Typography</h2>
+  <span class="d">字体先负责建立信息秩序。层级靠<b>字重 + 对比度</b>，不靠字号堆叠——字号阶梯刻意收小。</span></div>
+  <div class="panel type-specimens">
+    <div class="t-display">Display · 28–32 / 600 · 字距 −1%</div>
+    <div class="t-h1">H1 · 20 / 600 — 标题只比正文大一点</div>
+    <div class="t-h2">H2 · 17 / 600 — 次级标题</div>
+    <div class="t-h3">H3 · 15 / 600 — 与正文同尺寸，只靠字重区分</div>
+    <div class="t-body">Body · 15 / 400 / 1.7（中文 1.75–1.9）· 西文 ≤68ch / 中文 33–40 字。中英混排 English inline 留 1/4 空隙、不跳基线、不换行突兀。</div>
+    <div class="t-label">Label / Caption · 12–13 / 400 / secondary — 元数据、注释、时间戳</div>
+    <div class="t-code">Code / Prompt · 14 / 等宽 / sunken 底 · 6px 圆角</div>
+    <div class="t-emph">强调（选中 / 运行中）：字号永远不动，只把 <b>400 → 600</b>。例如同行里 <b>这一句被强调</b>，但和周围<b>一样大</b>。</div>
+    <div class="spec"><span class="tag">§3</span>字号只此六档、字重只此两档（400/600）；禁止靠放大字号制造"气场"，不为追求高级而擅改字号 token。</div>
+  </div>
+
+  <div class="panel" style="margin-top:var(--s32)">
+    <div class="cap">中文段落排版 · 细则见 §3.1</div>
+    <p class="cn-body">这是一段按中文细则设置的正文，用来对照观感。中文与西文 <span class="mono">CSS</span>、数字 33–40 之间留约 1/4 空隙（盘古之白），标点用全角，行首避头尾。强调走字重而非斜体——<b>斜切的汉字会破坏方块节奏</b>。段落不缩进、用段间距分组；正文左对齐，不做两端对齐，否则中文词间无空格会被拉出难看的缝隙。</p>
+    <div class="cn-dodont">
+      <div class="cn-bad"><span class="lab">✗ 反例</span><span>使用CSS布局，行高1.5，两端对齐，<i>斜体强调</i>，字距+0.05em。</span></div>
+      <div class="cn-good"><span class="lab">✓ 正例</span><span>使用 CSS 布局，行高 1.8，左对齐，<b>字重强调</b>，字距 0、避头尾。</span></div>
+    </div>
+    <div class="spec"><span class="tag">§3.1</span>字体栈须含 <code>Microsoft YaHei</code>（否则 Windows 中文掉宋体）；行长按汉字 33–40、行高 1.75–1.9、左对齐禁 justify、全角标点 + 避头尾（<code>line-break:strict</code>）、强调不用斜体。</div>
+  </div>
+
+  <div class="panel" style="margin-top:var(--s32)">
+    <div class="cap">文本对比度三档 · 正文尺寸实感</div>
+    <div class="contrast-demo">
+      <div class="p">正文 primary <span class="mono" style="color:var(--sec)">12.7:1</span></div>
+      <div class="s">次级 secondary <span class="mono">4.8:1</span></div>
+      <div class="x">禁用 disabled <span class="mono">2.8:1</span></div>
+    </div>
+    <div class="spec warn"><span class="tag">⚑ §9.1</span>正文 12.7 → 次级 4.8 直接跳档。在高密度长表单里，二级灰会不会"灰得太突然"？要不要在 6–7:1 补一档？<b>请你盯着上面这行 secondary 判一下。</b></div>
+  </div>
+</section>
+
+<!-- ============ 2 COLORS ============ -->
+<section id="color"><div class="head"><span class="k">02</span><h2>色彩 Color</h2>
+  <span class="d">界面是一张暖调低饱和的纸。全页只允许一个高饱和 accent，它只属于"当前选中 / 主操作"。切到美术馆黑看叠加式抬升。</span></div>
+
+  <div class="cap">纸感语义色 · 当前主题实测值</div>
+  <div class="swatches">
+    <div class="sw"><div class="c" style="background:var(--canvas)"></div><div class="i"><b>Canvas 纸</b><small class="hexv" data-lt="#F4F1EA" data-dt="#16130F"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--surface)"></div><div class="i"><b>Surface 卡纸</b><small class="hexv" data-lt="#FAF8F3" data-dt="#1E1A15"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--sunken)"></div><div class="i"><b>Sunken 凹陷</b><small class="hexv" data-lt="#EDEAE2" data-dt="#13100C"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--ink)"></div><div class="i"><b>Ink 墨</b><small class="hexv" data-lt="#2B2A26" data-dt="#EDE9E1"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--sec)"></div><div class="i"><b>Secondary</b><small class="hexv" data-lt="#6E6A5E" data-dt="#A8A294"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--border)"></div><div class="i"><b>Border 气声</b><small>≈1.15:1 · 不许更重</small></div></div>
+    <div class="sw"><div class="c" style="background:var(--accent)"></div><div class="i"><b>Accent</b><small class="mono hexv" data-acc="1"></small></div></div>
+    <div class="sw"><div class="c" style="background:var(--tint)"></div><div class="i"><b>Tint 浅晕</b><small class="mono hexv" data-tint="1"></small></div></div>
+  </div>
+
+  <div class="cap" style="margin-top:var(--s32)">状态色 · 低饱和同族（与 accent 相互独立）</div>
+  <div class="rowline">
+    <span class="chip chip--ok"><span class="pt"></span>成功 success</span>
+    <span class="chip chip--warn"><span class="pt"></span>警告 warning</span>
+    <span class="chip chip--err"><span class="pt"></span>错误 danger</span>
+    <span class="chip chip--on">当前选中 / 主操作 = 唯一的 accent 出口</span>
+  </div>
+  <div class="spec warn"><span class="tag">⚑ §9.4</span>铁锈红与 danger、绿/青 accent 与 success 色相偏近。把 accent 切到<b>祖母绿/蒂芙尼青</b>再看上面成功态 chip：撞色时靠<b>字重 / 图标 / 文案</b>兜底，绝不改状态色本身——这个兜底够不够，你验。</div>
+
+  <div class="cap" style="margin-top:var(--s32)">抬升阶梯 · 亮色用阴影 / 暗色用白色叠加</div>
+  <div class="elevate">
+    <div class="elev" data-l="1"><div class="lv">L1 · 6%</div><div class="hex">可交互卡 / 拖拽中</div></div>
+    <div class="elev" data-l="2"><div class="lv">L2 · 9%</div><div class="hex">下拉 / tooltip</div></div>
+    <div class="elev" data-l="3"><div class="lv">L3 · 14%</div><div class="hex">Modal / 命令面板</div></div>
+  </div>
+  <div class="spec warn"><span class="tag">⚑ §9.3 / §9.6</span>切到<b>美术馆黑</b>盯这三块：白叠加 6/9/14% 会不会泛灰发闷？另，规范正文写"surface=底+6%"，实测 <code>#1E1A15</code> ≈ 底+3%，当前以手定 hex 为准——这个数值打架你怎么收。</div>
+</section>
+
+<!-- ============ 3 BUTTONS ============ -->
+<section id="buttons"><div class="head"><span class="k">03</span><h2>按钮 Buttons</h2>
+  <span class="d">主操作 accent 实色平涂、无渐变无阴影；次按钮气声描边；文字按钮用深墨不碰高饱和。§5.3 要求八态齐备且一致。</span></div>
+
+  <div class="panel">
+    <div class="cap">三种角色 · 悬停 / 按下 / 聚焦可实时体验</div>
+    <div class="rowline">
+      <button class="btn btn--primary">主操作 Primary</button>
+      <button class="btn">次要操作 Secondary</button>
+      <button class="btn btn--text">文字按钮 Text</button>
+      <button class="btn btn--danger">删除（危险）</button>
+    </div>
+    <div class="spec"><span class="tag">§4</span>文字按钮前景恒用 <code>--accent-ink / --accent-text</code>（本页 <code>--accent-fg</code>），绝不用高饱和原色做小字。危险按钮 <code>--danger</code> 与铁锈 accent 的辨识度，正是 §9.4 要盯的点。</div>
+  </div>
+
+  <div class="panel" style="margin-top:var(--s32)">
+    <div class="cap">微交互状态完整性 §5.3 · Default / Hover / Pressed / Focus / Disabled / Loading / Success / Error</div>
+    <div class="rowline" style="gap:var(--s24)">
+      <div class="statecard"><span class="n">Default</span><button class="btn btn--primary">保存</button></div>
+      <div class="statecard"><span class="n">Hover</span><button class="btn btn--primary" style="filter:brightness(.96)">保存</button></div>
+      <div class="statecard"><span class="n">Pressed</span><button class="btn btn--primary" style="filter:brightness(.92)">保存</button></div>
+      <div class="statecard"><span class="n">Focus</span><button class="btn btn--primary is-focus">保存</button></div>
+      <div class="statecard"><span class="n">Disabled</span><button class="btn btn--primary is-disabled" disabled>保存</button></div>
+      <div class="statecard"><span class="n">Loading</span><button class="btn btn--primary" id="loadBtn"><span class="spinner"></span>保存中</button></div>
+      <div class="statecard"><span class="n">Success</span><button class="btn btn--success">✓ 已保存</button></div>
+      <div class="statecard"><span class="n">Error</span><button class="btn" style="border-color:var(--danger);color:var(--danger)">✕ 保存失败</button></div>
+    </div>
+    <div class="spec"><span class="tag">§5.1 / §5.3</span>焦点环 = 2px <code>--accent-ink</code> 外描边；选中/状态反馈禁 bounce；Loading 用 16px accent 描边 spinner，禁跑马灯。Success/Error 同时给了图标 + 文案（<b>非颜色通道</b>）。八态在此以 pinned 样例呈现——画廊职责是证明"态存在"，不做成可复用组件库（那是 DEFERRED 红线）。</div>
+  </div>
+</section>
+
+<!-- ============ 4 INPUTS ============ -->
+<section id="inputs"><div class="head"><span class="k">04</span><h2>输入 Inputs</h2>
+  <span class="d">聚焦=描边换成 accent 加粗一档，不加外发光。错误/成功状态要有明确文案与非颜色通道。</span></div>
+  <div class="panel">
+    <div class="grid two">
+      <div class="field"><label>默认</label><input class="input" placeholder="在此输入 Prompt…"></div>
+      <div class="field"><label>聚焦态（点一下看描边）</label><input class="input" value="已输入内容"></div>
+      <div class="field"><label>搜索</label><div class="search"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input class="input" placeholder="搜索资产…"></div></div>
+      <div class="field"><label>禁用</label><input class="input" value="不可编辑" disabled></div>
+      <div class="field"><label>错误</label><input class="input input--err" value="缺少 {{变量}} 定义" aria-invalid="true">
+        <span class="hint hint--err"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>标题不能为空，请补齐必填变量</span></div>
+      <div class="field"><label>成功（校验通过）</label><input class="input input--ok" value="导演分镜 · v3">
+        <span class="hint hint--ok"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M20 6 9 17l-5-5"/></svg>名称可用</span></div>
+      <div class="field"><label>下拉 / 模型选择器</label><select><option>GPT-4o</option><option selected>Claude 3.5 Sonnet</option><option>Gemini 2.0</option></select></div>
+    </div>
+    <div class="grid two" style="margin-top:var(--s24)">
+      <div class="field"><label>多行 · Prompt 正文</label><textarea>你是{{领域}}专家。输出用 Markdown 分节，每节不超过 3 条，不要寒暄。</textarea></div>
+      <div class="field"><label>开关 / 勾选（含禁用态）</label>
+        <div class="rowline" style="gap:var(--s24)">
+          <label class="switch"><input type="checkbox" checked><span class="track"></span>流式输出</label>
+          <label class="switch"><input type="checkbox" disabled><span class="track"></span>锁定项</label>
+          <label class="checkrow"><input type="checkbox" checked>引用参考图</label>
+          <label class="checkrow"><input type="checkbox" disabled>已归档</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 CARDS + CHIPS ============ -->
+<section id="cards"><div class="head"><span class="k">05</span><h2>卡片 Cards · 标签 Chips</h2>
+  <span class="d">资产卡：surface 底、10px 圆角、标题 Semibold、变量数/引用数/更新时间右对齐降为 secondary。默认无阴影，hover 才升 L1。</span></div>
+  <div class="cards">
+    <div class="asset"><h4>室内效果图 · 导演分镜</h4><p>七要素视频 Prompt 编译器，按"分析输入图→识别空间/光线→判断运镜"顺序生成。</p>
+      <div class="meta"><span>5 变量 · 3 引用</span><b>2026-10-06</b></div></div>
+    <div class="asset"><h4>户型空间记忆</h4><p>把效果图↔空间↔户型图建立稳定语义索引，Space ID 跨文档不变。</p>
+      <div class="meta"><span>2 变量 · 7 引用</span><b>2026-09-30</b></div></div>
+    <div class="asset"><h4>写作风格分身</h4><p>蒸馏某作者的思维与文风，生成可复用分身提示词。</p>
+      <div class="meta"><span>8 变量 · 12 引用</span><b>2026-09-19</b></div></div>
+  </div>
+  <div class="cap" style="margin-top:var(--s24)">Chip · 状态用 tint，选中才用实色 accent</div>
+  <div class="rowline">
+    <span class="chip">Prompt</span><span class="chip">3 references</span><span class="chip chip--on">已选中</span>
+    <span class="chip chip--ok"><span class="pt"></span>已完成</span><span class="chip chip--warn"><span class="pt"></span>待校准</span><span class="chip chip--err"><span class="pt"></span>失败</span>
+  </div>
+  <div class="spec warn"><span class="tag">⚑ 派生值</span>状态色只规定了实色，没规定"状态 chip 的浅底"。上面 <code>chip--ok/warn/err</code> 的底色是我用 <code>color-mix(状态色 12–16%, surface)</code> 现推的——规范未定义，需你确认要不要正式收进 token。</div>
+</section>
+
+<!-- ============ 6 TABLES ============ -->
+<section id="tables"><div class="head"><span class="k">06</span><h2>表格 Tables</h2>
+  <span class="d">高密度信息界面：气声分隔线、元数据右对齐降 secondary、选中行= tint 底 + 左侧 accent 条 + 字重强调。</span></div>
+  <div class="panel" style="padding:0;overflow:hidden">
+    <div class="tablewrap"><table>
+      <thead><tr><th>资产名称</th><th>类型</th><th>状态</th><th class="num">引用</th><th class="num">更新</th></tr></thead>
+      <tbody>
+        <tr><td>分镜导演 · fenjing-daoyan</td><td>Skill</td><td><span class="chip chip--ok"><span class="pt"></span>稳定</span></td><td class="num">34</td><td class="num">09-03</td></tr>
+        <tr class="is-on"><td>分镜制片 · fenjing-zhipian</td><td>Skill</td><td><span class="chip chip--warn"><span class="pt"></span>迭代中</span></td><td class="num">12</td><td class="num">10-06</td></tr>
+        <tr><td>户型分析器 · floorplan</td><td>Skill</td><td><span class="chip chip--ok"><span class="pt"></span>稳定</span></td><td class="num">21</td><td class="num">09-20</td></tr>
+        <tr><td>V0.2 质量层 · Design QA</td><td>规范</td><td><span class="chip"><span class="pt"></span>EXPLORING</span></td><td class="num">—</td><td class="num">10-06</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="spec"><span class="tag">§4 信息密度</span>能 8 不 12、能 12 不 16；元数据右对齐弱化。选中行没有靠"整行实色"抢眼球，而是 tint + 左条 + 字重——符合"层级靠字重不靠面积"。</div>
+</section>
+
+<!-- ============ 7 MODAL / PALETTE / CODE ============ -->
+<section id="feedback"><div class="head"><span class="k">07</span><h2>弹窗 · 命令面板 · 代码块</h2>
+  <span class="d">Modal/命令面板走 L3 空间动效（遮罩=canvas 压暗、面板=surface）；代码块 sunken 底、复制按钮 hover 才显形。</span></div>
+  <div class="grid two">
+    <div class="panel">
+      <div class="cap">Modal · §5.2 L3 Spatial</div>
+      <p style="font-size:13px;color:var(--sec);margin-bottom:var(--s16)">打开会看到 240ms 缩放淡入 + 遮罩。Esc / 点遮罩关闭。<b>动效只在浮层，产品界面默认仍在 L0–L2。</b></p>
+      <button class="btn btn--primary" id="openModal">打开确认弹窗</button>
+      <div class="spec warn"><span class="tag">⚑ §5.2 / §9.9</span>L4 叙事动效仅限展示页，功能页不得滥用。这页刻意只做到 L3 封顶——护栏够不够硬，是 §9.9 要你判的。</div>
+    </div>
+    <div class="panel">
+      <div class="cap">命令面板 · 行高紧凑 8px</div>
+      <div class="palette">
+        <div class="cmd"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="输入命令或搜索…"></div>
+        <ul><li aria-selected="true">新建 Prompt <small>⌘N</small></li><li>打开资产库 <small>⌘O</small></li><li>切换 accent 皮肤 <small>⌘⇧P</small></li><li>导出 DESIGN.md <small>⌘E</small></li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="cap" style="margin-top:var(--s24)">Code Block / Prompt · sunken 底、复制按钮悬停显形</div>
+  <div class="codeblock">
+    <button class="btn btn--sm copy" id="copyBtn">复制</button>
+    <pre><span class="c-com"># Universal Intent → Prompt Compiler → Model-specific</span>
+<span class="c-key">subject</span>: 一位设计师站在未完工的客厅中央
+<span class="c-key">camera</span>: 机位在入口右侧齐眼高，缓慢向前推进 <span class="c-com">（禁穿墙/穿家具）</span>
+<span class="c-key">lighting</span>: 下午低角度侧光，主光暖 3200K，辅光补面部
+<span class="c-key">constraint</span>: <span class="c-str">"人物不得直视镜头；比例锚定沙发扶手高度"</span></pre>
+  </div>
+</section>
+
+<!-- ============ 8 NAV + EMPTY + LOADING ============ -->
+<section id="states" style="border-bottom:none"><div class="head"><span class="k">08</span><h2>导航态 · 空状态 · 加载</h2>
+  <span class="d">Tab/面包屑/分页的分段控件：选中=实色 accent（全系统唯一彩色出口）。空状态与骨架屏都不靠颜色单独表意。</span></div>
+  <div class="grid two">
+    <div class="stack">
+      <div class="tabs"><button aria-selected="true">概览</button><button>资产</button><button>设置</button></div>
+      <div class="crumb"><span>工作台</span>›<span>Prompt</span>›<b>导演分镜</b></div>
+      <div class="pager"><button>‹</button><button aria-current="true">1</button><button>2</button><button>3</button><button>›</button></div>
+      <div class="seg" style="align-self:flex-start"><button aria-pressed="true">列表</button><button aria-pressed="false">网格</button></div>
+    </div>
+    <div class="stack">
+      <div class="empty">
+        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2.5"/></svg>
+        <h4>还没有 Prompt</h4>
+        <p>新建第一条，或从资产库导入一个模板开始。</p>
+        <button class="btn btn--primary btn--sm">+ 新建 Prompt</button>
+      </div>
+    </div>
+  </div>
+  <div class="cap" style="margin-top:var(--s24)">加载态 · 骨架屏呼吸 + AI 流式光标</div>
+  <div class="grid two">
+    <div class="panel skel-line">
+      <div class="skel" style="width:60%"></div><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:45%"></div>
+    </div>
+    <div class="panel chatmsg">
+      <div class="user">帮我优化这段 Prompt，让输出更有结构。</div>
+      <div class="ai" id="stream">好的，我从角色定义、输出格式、约束条件三处重组<span class="cur"></span></div>
+    </div>
+  </div>
+  <div class="spec"><span class="tag">§5.1 / §4</span>骨架屏=surface 底 + 6% 黑/白呼吸（opacity .5↔1，<b>1.2s 是规范钦定值</b>，这里照渲染供你判它是否偏长）；AI 流式"文字逐 token 出现即动画本体，不加 shimmer"；生成光标=accent 细竖线。空状态无插画、无颜色堆砌，靠文案成立。</div>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  <span>本页为 V0.2 的一次真实渲染 · 仓库正式展示物 <span class="mono">gallery.html</span>。</span>
+  <span>MT-Visual-Language · 唯一真源 · V0.2 · 修订 R2 · 内存态，刷新回亮色铁锈</span>
+</div></footer>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal">
+    <h3 id="mTitle">删除这条 Prompt？</h3>
+    <p>此操作会把资产移入回收站。30 天内可恢复，不会永久删除你的文件。</p>
+    <div class="foot">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn btn--danger" id="modalOk">移入回收站</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 全部为内存态：无任何 localStorage/sessionStorage。刷新即回默认。 */
+(function(){
+  var root=document.documentElement;
+  var themeBtn=document.getElementById('themeBtn');
+  var q=new URLSearchParams(location.search);
+
+  function syncHex(){
+    var dark=root.getAttribute('data-theme')==='dark';
+    document.querySelectorAll('.hexv').forEach(function(el){
+      if(el.dataset.acc!=null){el.textContent=getComputedStyle(root).getPropertyValue('--accent').trim();}
+      else if(el.dataset.tint!=null){el.textContent=getComputedStyle(root).getPropertyValue('--tint').trim();}
+      else if(el.dataset.lt!=null){el.textContent=dark?el.dataset.dt:el.dataset.lt;}
+    });
+  }
+  function setTheme(dark){
+    root.setAttribute('data-theme',dark?'dark':'light');
+    themeBtn.textContent=dark?'☀ 纸面模式':'☾ 美术馆黑';
+    syncHex();
+  }
+  themeBtn.addEventListener('click',function(){setTheme(root.getAttribute('data-theme')!=='dark');});
+
+  var seg=document.getElementById('accentSeg');
+  function markSlot(){
+    var a=root.getAttribute('data-accent')||'rust';
+    seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.set===a);});
+    document.querySelectorAll('#slotCards .sw').forEach(function(sw){
+      sw.style.outline=(sw.dataset.slot===a)?'2px solid var(--accent-fg)':'';
+      sw.style.outlineOffset='2px';
+    });
+  }
+  seg.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-set]'); if(!b)return;
+    root.setAttribute('data-accent',b.dataset.set); markSlot(); syncHex();
+  });
+
+  /* 复制当前配色链接（供分享某个皮肤/主题态） */
+  function stateURL(){
+    var p=new URLSearchParams();
+    p.set('theme',root.getAttribute('data-theme'));
+    p.set('accent',root.getAttribute('data-accent'));
+    return location.href.split('?')[0]+'?'+p.toString();
+  }
+  document.getElementById('linkBtn').addEventListener('click',function(){
+    var b=this,u=stateURL();
+    (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject())
+      .then(function(){b.textContent='已复制 ✓';}).catch(function(){b.textContent=u;})
+      .finally(function(){setTimeout(function(){b.textContent='复制当前配色链接';},1600);});
+  });
+
+  /* Loading 按钮演示 */
+  var loadBtn=document.getElementById('loadBtn');
+  loadBtn&&loadBtn.addEventListener('click',function(){
+    if(loadBtn.dataset.busy)return; loadBtn.dataset.busy=1;
+    loadBtn.innerHTML='<span class="spinner"></span>保存中';
+    setTimeout(function(){loadBtn.textContent='✓ 已保存';
+      setTimeout(function(){loadBtn.textContent='保存';delete loadBtn.dataset.busy;},1200);},1400);
+  });
+
+  /* Modal */
+  var ov=document.getElementById('overlay');
+  function open(){ov.classList.add('open');document.getElementById('modalOk').focus();}
+  function close(){ov.classList.remove('open');document.getElementById('openModal').focus();}
+  document.getElementById('openModal').addEventListener('click',open);
+  document.getElementById('modalCancel').addEventListener('click',close);
+  document.getElementById('modalOk').addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))close();});
+
+  /* 复制代码 */
+  var copy=document.getElementById('copyBtn');
+  copy&&copy.addEventListener('click',function(){
+    var t=document.querySelector('.codeblock pre').innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject())
+      .then(function(){copy.textContent='已复制';}).catch(function(){copy.textContent='Ctrl+C';})
+      .finally(function(){setTimeout(function(){copy.textContent='复制';},1400);});
+  });
+
+  /* Tabs / 命令面板 选中 */
+  document.querySelectorAll('.tabs').forEach(function(g){
+    g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      g.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-selected',x===b);});});
+  });
+  var pu=document.querySelector('.palette ul');
+  pu&&pu.addEventListener('click',function(e){var li=e.target.closest('li');if(!li)return;
+    pu.querySelectorAll('li').forEach(function(x){x.setAttribute('aria-selected',x===li);});});
+
+  /* 流式打字演示（尊重 reduced-motion；带 timer 守卫，避免叠加） */
+  var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var stream=document.getElementById('stream');
+  var typeTimer=null;
+  if(stream&&!reduce){
+    var full=stream.firstChild.textContent; stream.firstChild.textContent=''; var i=0;
+    clearTimeout(typeTimer);
+    (function tick(){if(i<=full.length){stream.firstChild.textContent=full.slice(0,i++);typeTimer=setTimeout(tick,45);}})();
+  }
+
+  /* 初始：深链 + 控件对齐 */
+  var qAcc=q.get('accent'), qTheme=q.get('theme');
+  if(qAcc&&['rust','klein','tiffany','emerald'].indexOf(qAcc)>=0) root.setAttribute('data-accent',qAcc);
+  if(qTheme==='dark') root.setAttribute('data-theme','dark');
+  themeBtn.textContent=(root.getAttribute('data-theme')==='dark')?'☀ 纸面模式':'☾ 美术馆黑';
+  markSlot();
+  if(q.get('open')==='1') setTimeout(open,60);
+  syncHex();
+})();
+</script>
+</body>
+</html>
